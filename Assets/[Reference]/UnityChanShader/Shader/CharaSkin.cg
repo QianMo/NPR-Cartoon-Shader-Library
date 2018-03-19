@@ -4,6 +4,12 @@
 // Character skin shader
 // Includes falloff shadow
 
+//---------------------------------------------------------
+/// CharaSkin for 眼睛、脸、皮肤、睫毛
+//---------------------------------------------------------
+
+
+
 #define ENABLE_CAST_SHADOWS
 
 // Material parameters

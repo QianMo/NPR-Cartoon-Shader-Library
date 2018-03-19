@@ -4,6 +4,11 @@
 // Character shader
 // Includes falloff shadow and highlight, specular, reflection, and normal mapping
 
+//---------------------------------------------------------
+// CharaMain for 衣服和头发
+//---------------------------------------------------------
+
+
 #define ENABLE_CAST_SHADOWS
 
 // Material parameters
@@ -73,14 +78,18 @@ v2f vert( appdata_tan v )
 	//将法线从物体空间转换到世界空间
 	o.normal = normalize( mul( unity_ObjectToWorld, float4_t( v.normal, 0 ) ).xyz );
 	
-	// Eye direction vector
+	// ============Eye direction vector ======================
+	//将顶点从物体空间转换到世界空间
 	half4 worldPos = mul( unity_ObjectToWorld, v.vertex );
+	// 视点方向 = normalize （摄像机位置 - 世界空间顶点位置 ）
 	o.eyeDir.xyz = normalize( _WorldSpaceCameraPos.xyz - worldPos.xyz ).xyz;
 	
-	// Binormal and tangent (for normal map)
+	// ============Binormal and tangent (for normal map)=================
+	//物体空间法线
 	o.tangent = v.tangent.xyz;
+	//物体空间副切线
 	o.binormal = cross( v.normal, v.tangent.xyz ) * v.tangent.w;
-	
+	//世界空间光照方向
 	o.lightDir = WorldSpaceLightDir( v.vertex );
 
 #ifdef ENABLE_CAST_SHADOWS
@@ -90,52 +99,84 @@ v2f vert( appdata_tan v )
 	return o;
 }
 
-// Overlay blend
+// ==============Overlay blend====================
 inline float3_t GetOverlayColor( float3_t inUpper, float3_t inLower )
 {
 	float3_t oneMinusLower = float3_t( 1.0, 1.0, 1.0 ) - inLower;
 	float3_t valUnit = 2.0 * oneMinusLower;
 	float3_t minValue = 2.0 * inLower - float3_t( 1.0, 1.0, 1.0 );
+
+	//最大值
 	float3_t greaterResult = inUpper * valUnit + minValue;
 
+	//最小值
 	float3_t lowerResult = 2.0 * inLower * inUpper;
 
+	//四舍五入
 	half3 lerpVals = round(inLower);
+
+	//插值 lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a) 
 	return lerp(lowerResult, greaterResult, lerpVals);
 }
 
-// Compute normal from normal map
+// =============Compute normal from normal map=========================
+// 从法线贴图分量获取调和后的法线向量
 inline float3_t GetNormalFromMap( v2f input )
 {
+	//法线贴图向量 = normalize （法线贴图 * 2.0 - 1.0）
 	float3_t normalVec = normalize( tex2D( _NormalMapSampler, input.uv ).xyz * 2.0 - 1.0 );
+
+	//法线向量 =  输入切线值 * 法线贴图向量.x + 输入副法线值 *  法线贴图向量.y + 输入法线值 *  法线贴图向量.z
 	normalVec = input.tangent * normalVec.x + input.binormal * normalVec.y + input.normal * normalVec.z;
+
 	return normalVec;
 }
 
 // Fragment shader
 float4 frag( v2f i ) : COLOR
 {
+	//漫反射采样颜色
 	float4_t diffSamplerColor = tex2D( _MainTex, i.uv.xy );
 
+	//世界空间法线
 	float3_t normalVec = i.normal;// GetNormalFromMap( i );
 	
-	// Falloff. Convert the angle between the normal and the camera direction into a lookup for the gradient
+	// ==========Falloff. Convert the angle between the normal and the camera direction into a lookup for the gradient============
+	// ==========衰减值。将法线方向和摄像机方向之间的夹角转换为渐变色的一个lookup（从值查表）==========================
+	//法线向量N与视点方向V点积
 	float_t normalDotEye = dot( normalVec, i.eyeDir.xyz );
+	//clamp(x,a,b) - 如果x 值小于a，则返回a；如果x 值大于b，返回b；否则，返回x
+	// falloffU（衰减值） = 一个0.02到0.98之间的值
 	float_t falloffU = clamp( 1.0 - abs( normalDotEye ), 0.02, 0.98 );
+	// 衰减采样颜色 = FALLOFF_POWER * 从_FalloffSampler纹理中采样颜色值
 	float4_t falloffSamplerColor = FALLOFF_POWER * tex2D( _FalloffSampler, float2( falloffU, 0.25f ) );
+	// 阴影颜色 = 漫反射采样颜色^2
 	float3_t shadowColor = diffSamplerColor.rgb * diffSamplerColor.rgb;
+	//lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a) 
+	// 结合颜色 = lerp（漫反射采样颜色 ， 阴影颜色 ，衰减采样颜色.r ） 
 	float3_t combinedColor = lerp( diffSamplerColor.rgb, shadowColor, falloffSamplerColor.r );
+	// 结合颜色 *= （1.0 + 衰减采样颜色.rgb * 衰减采样颜色.a ） 
 	combinedColor *= ( 1.0 + falloffSamplerColor.rgb * falloffSamplerColor.a );
 
-	// Specular
-	// Use the eye vector as the light vector
+	// =======================Specular========================
+	// =============Use the eye vector as the light vector==========
+	// 镜面反射采样贴图
 	float4_t reflectionMaskColor = tex2D( _SpecularReflectionSampler, i.uv.xy );
+	// 镜面反射点积 = Dot（世界空间法线N，视点方向V）
 	float_t specularDot = dot( normalVec, i.eyeDir.xyz );
+	// lit函数-函数计算环境光、散射光、镜面光的贡献，返回的4 元向量。
+	// 常规下是lit(NdotL,NdotH, m)，这里是lit(NdotV,NdotV, m)
 	float4_t lighting = lit( normalDotEye, specularDot, _SpecularPower );
+	//镜面反射光分量 =  saturate（lit(NdotV,NdotV, m)） * 镜面反射采样贴图.rgb * 漫反射采样颜色.rgb
 	float3_t specularColor = saturate( lighting.z ) * reflectionMaskColor.rgb * diffSamplerColor.rgb;
+	//结合颜色 += 镜面反射光分量
 	combinedColor += specularColor;
 	
-	// Reflection
+	// ===========================Reflection=======================
+	// ============================反射分量========================
+	// reflect(I, N) 根据入射光方向向量I，和顶点法向量N，计算反射光方向向量。
+	// 其中I 和N必须被归一化，需要非常注意的是，这个I 是指向顶点的；函数只对三元向量有效。
+	// 反射向量 =  reflect( 视点方向V，法向量N )
 	float3_t reflectVector = reflect( -i.eyeDir.xyz, normalVec ).xzy;
 	float2_t sphereMapCoords = 0.5 * ( float2_t( 1.0, 1.0 ) + reflectVector.xy );
 	float3_t reflectColor = tex2D( _EnvMapSampler, sphereMapCoords ).rgb;
