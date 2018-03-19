@@ -174,10 +174,11 @@ float4 frag( v2f i ) : COLOR
 	
 	// ===========================Reflection=======================
 	// ============================反射分量========================
-	// reflect(I, N) 根据入射光方向向量I，和顶点法向量N，计算反射光方向向量。
+	// reflect(I, N) 定义为根据入射光方向向量I，和顶点法向量N，计算反射光方向向量。
 	// 其中I 和N必须被归一化，需要非常注意的是，这个I 是指向顶点的；函数只对三元向量有效。
-	// 反射向量 =  reflect( 视点方向V，法向量N )
+	// 这里 ： 反射向量 =  reflect( 视点方向V，法向量N )
 	float3_t reflectVector = reflect( -i.eyeDir.xyz, normalVec ).xzy;
+	// 球映射坐标 = 0.5 * （ float2(1.0,1.0) + 反射向量.XY )
 	float2_t sphereMapCoords = 0.5 * ( float2_t( 1.0, 1.0 ) + reflectVector.xy );
 	float3_t reflectColor = tex2D( _EnvMapSampler, sphereMapCoords ).rgb;
 	reflectColor = GetOverlayColor( reflectColor, combinedColor );
