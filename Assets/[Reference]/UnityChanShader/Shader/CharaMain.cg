@@ -100,6 +100,7 @@ v2f vert( appdata_tan v )
 }
 
 // ==============Overlay blend====================
+// ========== 输入一个上限值一个下限值，获取覆盖混合颜色值 =============
 inline float3_t GetOverlayColor( float3_t inUpper, float3_t inLower )
 {
 	float3_t oneMinusLower = float3_t( 1.0, 1.0, 1.0 ) - inLower;
@@ -167,9 +168,9 @@ float4 frag( v2f i ) : COLOR
 	// lit函数-函数计算环境光、散射光、镜面光的贡献，返回的4 元向量。
 	// 常规下是lit(NdotL,NdotH, m)，这里是lit(NdotV,NdotV, m)
 	float4_t lighting = lit( normalDotEye, specularDot, _SpecularPower );
-	//镜面反射光分量 =  saturate（lit(NdotV,NdotV, m)） * 镜面反射采样贴图.rgb * 漫反射采样颜色.rgb
+	// 镜面反射光分量 =  saturate（lit(NdotV,NdotV, m)） * 镜面反射采样贴图.rgb * 漫反射采样颜色.rgb
 	float3_t specularColor = saturate( lighting.z ) * reflectionMaskColor.rgb * diffSamplerColor.rgb;
-	//结合颜色 += 镜面反射光分量
+	// 结合颜色 += 镜面反射光分量
 	combinedColor += specularColor;
 	
 	// ===========================Reflection=======================
@@ -178,13 +179,19 @@ float4 frag( v2f i ) : COLOR
 	// 其中I 和N必须被归一化，需要非常注意的是，这个I 是指向顶点的；函数只对三元向量有效。
 	// 这里 ： 反射向量 =  reflect( 视点方向V，法向量N )
 	float3_t reflectVector = reflect( -i.eyeDir.xyz, normalVec ).xzy;
-	// 球映射坐标 = 0.5 * （ float2(1.0,1.0) + 反射向量.XY )
+	// 球映射坐标 = 0.5 * （ float2(1.0 , 1.0) + 反射向量.xy )
 	float2_t sphereMapCoords = 0.5 * ( float2_t( 1.0, 1.0 ) + reflectVector.xy );
+	// 反射颜色 = Tex2D(环境映射贴图 ，球映射坐标 ).rgb
 	float3_t reflectColor = tex2D( _EnvMapSampler, sphereMapCoords ).rgb;
+	// 反射颜色 = 获取覆盖混合颜色值 （上限值：反射颜色， 下限值：结合颜色 ）
 	reflectColor = GetOverlayColor( reflectColor, combinedColor );
 
+	//lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a)  
+	// 结合颜色 = lerp（结合颜色，反射颜色，镜面反射采样贴图.a）
 	combinedColor = lerp( combinedColor, reflectColor, reflectionMaskColor.a );
+	// 结合颜色 *= _Color.rgb * _LightColor0.rgb
 	combinedColor *= _Color.rgb * _LightColor0.rgb;
+	// 不透明度 = 漫反射采样颜色.a * _Color.a * _LightColor0.a
 	float opacity = diffSamplerColor.a * _Color.a * _LightColor0.a;
 
 #ifdef ENABLE_CAST_SHADOWS
@@ -194,7 +201,8 @@ float4 frag( v2f i ) : COLOR
 	combinedColor = lerp( shadowColor, combinedColor, attenuation );
 #endif
 
-	// Rimlight
+	// =======================Rimlight======================
+	// =======================边缘光======================
 	float_t rimlightDot = saturate( 0.5 * ( dot( normalVec, i.lightDir ) + 1.0 ) );
 	falloffU = saturate( rimlightDot * falloffU );
 	falloffU = tex2D( _RimLightSampler, float2( falloffU, 0.25f ) ).r;
