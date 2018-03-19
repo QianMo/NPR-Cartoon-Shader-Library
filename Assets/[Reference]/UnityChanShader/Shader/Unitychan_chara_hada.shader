@@ -20,6 +20,7 @@ Shader "UnityChan/Skin"
 			"LightMode"="ForwardBase"
 		}
 
+
 		Pass
 		{
 			Cull Back
