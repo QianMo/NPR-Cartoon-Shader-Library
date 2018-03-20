@@ -71,25 +71,25 @@ v2f vert( appdata_tan v )
 {
 	v2f o;
 
-	//将顶点从物体空间转换到裁剪空间
+	//  将顶点从物体空间转换到裁剪空间
 	o.pos = UnityObjectToClipPos( v.vertex );
-	//准备纹理
+	//  准备纹理
 	o.uv = TRANSFORM_TEX( v.texcoord.xy, _MainTex );
-	//将法线从物体空间转换到世界空间
+	//  将法线从物体空间转换到世界空间
 	o.normal = normalize( mul( unity_ObjectToWorld, float4_t( v.normal, 0 ) ).xyz );
 	
 	// ============Eye direction vector ======================
-	//将顶点从物体空间转换到世界空间
+	// 将顶点从物体空间转换到世界空间
 	half4 worldPos = mul( unity_ObjectToWorld, v.vertex );
 	// 视点方向 = normalize （摄像机位置 - 世界空间顶点位置 ）
 	o.eyeDir.xyz = normalize( _WorldSpaceCameraPos.xyz - worldPos.xyz ).xyz;
 	
 	// ============Binormal and tangent (for normal map)=================
-	//物体空间法线
+	// 物体空间法线
 	o.tangent = v.tangent.xyz;
-	//物体空间副切线
+	// 物体空间副切线
 	o.binormal = cross( v.normal, v.tangent.xyz ) * v.tangent.w;
-	//世界空间光照方向
+	// 世界空间光照方向
 	o.lightDir = WorldSpaceLightDir( v.vertex );
 
 #ifdef ENABLE_CAST_SHADOWS
@@ -144,16 +144,16 @@ float4 frag( v2f i ) : COLOR
 	
 	// ==========Falloff. Convert the angle between the normal and the camera direction into a lookup for the gradient============
 	// ==========衰减值。将法线方向和摄像机方向之间的夹角转换为渐变色的一个lookup（从值查表）==========================
-	//法线向量N与视点方向V点积
+	// 法线向量N与视点方向V点积
 	float_t normalDotEye = dot( normalVec, i.eyeDir.xyz );
-	//clamp(x,a,b) - 如果x 值小于a，则返回a；如果x 值大于b，返回b；否则，返回x
+	// clamp(x,a,b) - 如果x 值小于a，则返回a；如果x 值大于b，返回b；否则，返回x
 	// falloffU（衰减值） = 一个0.02到0.98之间的值
 	float_t falloffU = clamp( 1.0 - abs( normalDotEye ), 0.02, 0.98 );
 	// 衰减采样颜色 = FALLOFF_POWER * 从_FalloffSampler纹理中采样颜色值
 	float4_t falloffSamplerColor = FALLOFF_POWER * tex2D( _FalloffSampler, float2( falloffU, 0.25f ) );
 	// 阴影颜色 = 漫反射采样颜色^2
 	float3_t shadowColor = diffSamplerColor.rgb * diffSamplerColor.rgb;
-	//lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a) 
+	// lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a) 
 	// 结合颜色 = lerp（漫反射采样颜色 ， 阴影颜色 ，衰减采样颜色.r ） 
 	float3_t combinedColor = lerp( diffSamplerColor.rgb, shadowColor, falloffSamplerColor.r );
 	// 结合颜色 *= （1.0 + 衰减采样颜色.rgb * 衰减采样颜色.a ） 
@@ -179,6 +179,7 @@ float4 frag( v2f i ) : COLOR
 	// 其中I 和N必须被归一化，需要非常注意的是，这个I 是指向顶点的；函数只对三元向量有效。
 	// 这里 ： 反射向量 =  reflect( 视点方向V，法向量N )
 	float3_t reflectVector = reflect( -i.eyeDir.xyz, normalVec ).xzy;
+	//float3_t reflectVector = reflect( -i.lightDir, normalVec ).xzy;
 	// 球映射坐标 = 0.5 * （ float2(1.0 , 1.0) + 反射向量.xy )
 	float2_t sphereMapCoords = 0.5 * ( float2_t( 1.0, 1.0 ) + reflectVector.xy );
 	// 反射颜色 = Tex2D(环境映射贴图 ，球映射坐标 ).rgb
@@ -194,20 +195,32 @@ float4 frag( v2f i ) : COLOR
 	// 不透明度 = 漫反射采样颜色.a * _Color.a * _LightColor0.a
 	float opacity = diffSamplerColor.a * _Color.a * _LightColor0.a;
 
+	// ===========================shadows=======================
+	// ===========================阴影=======================
 #ifdef ENABLE_CAST_SHADOWS
 	// Cast shadows
+	// 阴影颜色 = _ShadowColor.rgb * 结合颜色
 	shadowColor = _ShadowColor.rgb * combinedColor;
+	// 衰减值 = saturate（2.0 * Unity内置函数LIGHT_ATTENUATION(i) - 1.0）
 	float_t attenuation = saturate( 2.0 * LIGHT_ATTENUATION( i ) - 1.0 );
+	//lerp(a, b, f) = (1− f )∗ a + b∗ f 或a + f ∗(b − a) 
+	// 结合颜色 = lerp（阴影颜色 ，结合颜色，衰减值 ）
 	combinedColor = lerp( shadowColor, combinedColor, attenuation );
 #endif
 
 	// =======================Rimlight======================
 	// =======================边缘光======================
+	// 边缘光点积 = saturate（0.5 * (dot（世界空间法线N，光线方向I）+ 1.0))
 	float_t rimlightDot = saturate( 0.5 * ( dot( normalVec, i.lightDir ) + 1.0 ) );
+	// falloffU（衰减值） = saturate(边缘光点积 * falloffU（衰减值） )
 	falloffU = saturate( rimlightDot * falloffU );
+	// falloffU（衰减值）= Tex2D(边缘光采样贴图 ， float2（衰减值 ， 0.25f）).r
 	falloffU = tex2D( _RimLightSampler, float2( falloffU, 0.25f ) ).r;
+	// 漫反射光照颜色 = 漫反射纹理采样颜色.rgb
 	float3_t lightColor = diffSamplerColor.rgb; // * 2.0;
+	// 结合颜色 += falloffU（衰减值）* 漫反射光照颜色
 	combinedColor += falloffU * lightColor;
 
+	//最终的颜色 = float4（结合颜色（rgb），不透明度（a））
 	return float4( combinedColor, opacity );
 }
