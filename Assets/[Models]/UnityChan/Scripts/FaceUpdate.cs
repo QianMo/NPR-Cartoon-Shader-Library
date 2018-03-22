@@ -9,31 +9,27 @@ namespace UnityChan
 		Animator anim;
 		public float delayWeight;
 		public bool isKeepFace = false;
-        public bool isGUI = true;
 
 		void Start ()
 		{
 			anim = GetComponent<Animator> ();
 		}
 
+/*
 		void OnGUI ()
 		{
-            if (isGUI)
-            {
-                GUILayout.Box("Face Update", GUILayout.Width(170), GUILayout.Height(25 * (animations.Length + 2)));
-                Rect screenRect = new Rect(10, 25, 150, 25 * (animations.Length + 1));
-                GUILayout.BeginArea(screenRect);
-                foreach (var animation in animations)
-                {
-                    if (GUILayout.RepeatButton(animation.name))
-                    {
-                        anim.CrossFade(animation.name, 0);
-                    }
-                }
-                isKeepFace = GUILayout.Toggle(isKeepFace, " Keep Face");
-                GUILayout.EndArea();
-            }
+			GUILayout.Box ("Face Update", GUILayout.Width (170), GUILayout.Height (25 * (animations.Length + 2)));
+			Rect screenRect = new Rect (10, 25, 150, 25 * (animations.Length + 1));
+			GUILayout.BeginArea (screenRect);
+			foreach (var animation in animations) {
+				if (GUILayout.RepeatButton (animation.name)) {
+					anim.CrossFade (animation.name, 0);
+				}
+			}
+			isKeepFace = GUILayout.Toggle (isKeepFace, " Keep Face");
+			GUILayout.EndArea ();
 		}
+*/
 
 		float current = 0;
 
