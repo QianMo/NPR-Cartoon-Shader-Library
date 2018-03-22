@@ -27,14 +27,18 @@ Shader "UnityChan/Eye - Transparent"
 			ZTest LEqual
 CGPROGRAM
 #pragma multi_compile_fwdbase
+#pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag
 #include "UnityCG.cginc"
 #include "AutoLight.cginc"
+#define ENABLE_CAST_SHADOWS
+#define ENABLE_RIMLIGHT
 #include "CharaSkin.cg"
 ENDCG
 		}
 	}
 
-	FallBack "Transparent/Cutout/Diffuse"
+	FallBack "Transparent/Diffuse"
 }
+

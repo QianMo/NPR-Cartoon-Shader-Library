@@ -15,14 +15,21 @@ Shader "UnityChan/Clothing - Double-sided"
 		_NormalMapSampler ("Normal Map", 2D) = "" {} 
 	}
 
+CGINCLUDE
+#include "UnityCG.cginc"
+#include "AutoLight.cginc"
+ENDCG
+
 	SubShader
 	{
 		Tags
 		{
-			"RenderType"="Opaque"
+			"RenderType"="OpaqueDoubleSided"
 			"Queue"="Geometry"
 			"LightMode"="ForwardBase"
 		}		
+
+        LOD 450
 
 		Pass
 		{
@@ -30,10 +37,14 @@ Shader "UnityChan/Clothing - Double-sided"
 			ZTest LEqual
 CGPROGRAM
 #pragma multi_compile_fwdbase
+#pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag
-#include "UnityCG.cginc"
-#include "AutoLight.cginc"
+#define ENABLE_CAST_SHADOWS
+#define ENABLE_NORMAL_MAP
+#define ENABLE_SPECULAR
+#define ENABLE_REFLECTION
+#define ENABLE_RIMLIGHT
 #include "CharaMain.cg"
 ENDCG
 		}
@@ -43,6 +54,7 @@ ENDCG
 			Cull Front
 			ZTest Less
 CGPROGRAM
+#pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag
 #include "UnityCG.cginc"
@@ -52,5 +64,129 @@ ENDCG
 
 	}
 
-	FallBack "Transparent/Cutout/Diffuse"
+	SubShader
+	{
+		Tags
+		{
+			"RenderType"="OpaqueDoubleSided"
+			"Queue"="Geometry"
+			"LightMode"="ForwardBase"
+		}
+
+        LOD 400
+
+		Pass
+		{
+			Cull Off
+			ZTest LEqual
+CGPROGRAM
+#pragma multi_compile_fwdbase
+#pragma target 3.0
+#pragma vertex vert
+#pragma fragment frag
+#define ENABLE_CAST_SHADOWS
+#define ENABLE_SPECULAR
+#define ENABLE_RIMLIGHT
+#include "CharaMain.cg"
+ENDCG
+		}
+
+		Pass
+		{
+			Cull Front
+			ZTest Less
+CGPROGRAM
+#pragma target 3.0
+#pragma vertex vert
+#pragma fragment frag
+#include "UnityCG.cginc"
+#include "CharaOutline.cg"
+ENDCG
+		}
+
+    }
+
+
+	SubShader
+	{
+		Tags
+		{
+			"RenderType"="OpaqueDoubleSided"
+			"Queue"="Geometry"
+			"LightMode"="ForwardBase"
+		}
+
+        LOD 300
+
+		Pass
+		{
+			Cull Off
+			ZTest LEqual
+CGPROGRAM
+#pragma multi_compile_fwdbase
+#pragma target 3.0
+#pragma vertex vert
+#pragma fragment frag
+#define ENABLE_CAST_SHADOWS
+#define ENABLE_SPECULAR
+#define ENABLE_RIMLIGHT
+#include "CharaMain.cg"
+ENDCG
+		}
+
+    }
+
+	SubShader
+	{
+		Tags
+		{
+			"RenderType"="OpaqueDoubleSided"
+			"Queue"="Geometry"
+			"LightMode"="ForwardBase"
+		}
+
+        LOD 250
+
+		Pass
+		{
+			Cull Off
+			ZTest LEqual
+CGPROGRAM
+#pragma multi_compile_fwdbase
+#pragma target 3.0
+#pragma vertex vert
+#pragma fragment frag
+#define ENABLE_CAST_SHADOWS
+#define ENABLE_RIMLIGHT
+#include "CharaMain.cg"
+ENDCG
+		}
+
+	}
+
+	SubShader
+	{
+		Tags
+		{
+			"RenderType"="OpaqueDoubleSided"
+			"Queue"="Geometry"
+		}
+
+        LOD 200
+
+		Pass
+		{
+			Cull Off
+			ZTest LEqual
+CGPROGRAM
+#pragma vertex vert
+#pragma fragment frag
+#include "Unlit.cg"
+ENDCG
+		}
+
+	}
+
+	FallBack "Diffuse"
 }
+
