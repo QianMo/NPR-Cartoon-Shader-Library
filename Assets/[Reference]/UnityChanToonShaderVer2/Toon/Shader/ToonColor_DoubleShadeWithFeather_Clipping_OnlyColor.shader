@@ -1,4 +1,4 @@
-Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_OnlyColor" {
+ÔªøShader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_OnlyColor" {
     Properties {
         [Enum(OFF,0,FRONT,1,BACK,2)] _CullMode("Cull Mode", int) = 2  //OFF/FRONT/BACK
         _ClippingMask ("ClippingMask", 2D) = "white" {}
@@ -23,7 +23,9 @@ Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_
         _ShadeColor_Step ("ShadeColor_Step", Range(0, 1)) = 0.4
         _1st2nd_Shades_Feather ("1st/2nd_Shades_Feather", Range(0.0001, 1)) = 0.0001
         _Set_2nd_ShadePosition ("Set_2nd_ShadePosition", 2D) = "white" {}
-        _HighColor ("HighColor", Color) = (1,1,1,1)
+        _HighColor ("HighColor", Color) = (0,0,0,1)
+//v.2.0.4 HighColor_Tex
+        _HighColor_Tex ("HighColor_Tex", 2D) = "white" {}
         [MaterialToggle] _Is_LightColor_HighColor ("Is_LightColor_HighColor", Float ) = 1
         [MaterialToggle] _Is_NormalMapToHighColor ("Is_NormalMapToHighColor", Float ) = 0
         _HighColor_Power ("HighColor_Power", Range(0, 1)) = 0
@@ -31,7 +33,7 @@ Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_
         [MaterialToggle] _Is_BlendAddToHiColor ("Is_BlendAddToHiColor", Float ) = 0
         [MaterialToggle] _Is_UseTweakHighColorOnShadow ("Is_UseTweakHighColorOnShadow", Float ) = 0
         _TweakHighColorOnShadow ("TweakHighColorOnShadow", Range(0, 1)) = 0
-//ÉnÉCÉJÉâÅ[É}ÉXÉN.
+//„Éè„Ç§„Ç´„É©„Éº„Éû„Çπ„ÇØ.
         _Set_HighColorMask ("Set_HighColorMask", 2D) = "white" {}
         _Tweak_HighColorMaskLevel ("Tweak_HighColorMaskLevel", Range(-1, 1)) = 0
         [MaterialToggle] _RimLight ("RimLight", Float ) = 0
@@ -41,7 +43,7 @@ Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_
         _RimLight_Power ("RimLight_Power", Range(0, 1)) = 0.1
         _RimLight_InsideMask ("RimLight_InsideMask", Range(0.0001, 1)) = 0.0001
         [MaterialToggle] _RimLight_FeatherOff ("RimLight_FeatherOff", Float ) = 0
-//ÉäÉÄÉâÉCÉgí«â¡ÉvÉçÉpÉeÉB.
+//„É™„É†„É©„Ç§„ÉàËøΩÂä†„Éó„É≠„Éë„ÉÜ„Ç£.
         [MaterialToggle] _LightDirection_MaskOn ("LightDirection_MaskOn", Float ) = 0
         _Tweak_LightDirection_MaskLevel ("Tweak_LightDirection_MaskLevel", Range(0, 0.5)) = 0
         [MaterialToggle] _Add_Antipodean_RimLight ("Add_Antipodean_RimLight", Float ) = 0
@@ -49,10 +51,10 @@ Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_
         [MaterialToggle] _Is_LightColor_Ap_RimLight ("Is_LightColor_Ap_RimLight", Float ) = 1
         _Ap_RimLight_Power ("Ap_RimLight_Power", Range(0, 1)) = 0.1
         [MaterialToggle] _Ap_RimLight_FeatherOff ("Ap_RimLight_FeatherOff", Float ) = 0
-//ÉäÉÄÉâÉCÉgÉ}ÉXÉN.
+//„É™„É†„É©„Ç§„Éà„Éû„Çπ„ÇØ.
         _Set_RimLightMask ("Set_RimLightMask", 2D) = "white" {}
         _Tweak_RimLightMaskLevel ("Tweak_RimLightMaskLevel", Range(-1, 1)) = 0
-//Ç±Ç±Ç‹Ç≈.
+//„Åì„Åì„Åæ„Åß.
         [MaterialToggle] _MatCap ("MatCap", Float ) = 0
         _MatCap_Sampler ("MatCap_Sampler", 2D) = "black" {}
         _MatCapColor ("MatCapColor", Color) = (1,1,1,1)
@@ -66,6 +68,10 @@ Shader "UnityChanToonShader/NoOutline/ToonColor_DoubleShadeWithFeather_Clipping_
         [MaterialToggle] _Is_UseTweakMatCapOnShadow ("Is_UseTweakMatCapOnShadow", Float ) = 0
         _TweakMatCapOnShadow ("TweakMatCapOnShadow", Range(0, 1)) = 0
         [HideInInspector]_Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
+//v.2.0.4 Emissive
+        _Emissive_Tex ("Emissive_Tex", 2D) = "white" {}
+        [HDR]_Emissive_Color ("Emissive_Color", Color) = (0,0,0,1)
+//GI
         _GI_Intensity ("GI_Intensity", Range(0, 1)) = 0
     }
     SubShader {
