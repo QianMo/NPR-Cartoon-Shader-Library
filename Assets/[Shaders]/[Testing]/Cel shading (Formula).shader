@@ -11,7 +11,7 @@ Shader "Cartoon-Shader-Library/Test/Lighting CelShader"
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		_Treshold ("Cel treshold" , Range(0.001, 20.)) = 5.
+		_Treshold ("Cel Treshold" , Range(0.001, 20.)) = 5.
 		_Ambient ("Ambient intensity", Range(0.,0.5)) = 0.1
 	}
 
